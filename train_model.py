@@ -26,7 +26,6 @@ def setup():
                         help="Fraction of the dataset to use for validation.")
     parser.add_argument("-o", "--output", required=True,
                         help="Path to the resulting Tensorflow graph.")
-    parser.add_argument("--snapshot", help="RNN snapshot to load.")
     parser.add_argument("--optimizer", default="Adam", choices=("RMSprop", "Adam"),
                         help="Optimizer to apply.")
     parser.add_argument("--dropout", type=float, default=0, help="Dropout ratio.")
@@ -43,7 +42,8 @@ def setup():
     return args
 
 
-def read_dataset(path: str, sequence_length: int) -> Tuple[List[numpy.ndarray], numpy.ndarray]:
+def read_dataset(path: str, sequence_length: int, batch_size: int) \
+        -> Tuple[List[numpy.ndarray], numpy.ndarray]:
     log = logging.getLogger("reader")
     if path.endswith(".gz"):
         fin = io.TextIOWrapper(gzip.open(path), newline="")
@@ -51,13 +51,17 @@ def read_dataset(path: str, sequence_length: int) -> Tuple[List[numpy.ndarray], 
         fin = open(path, newline="")
     try:
         size = sum(1 for _ in csv.reader(fin))
-        log.info("Size: %d", size)
+        rounded_size = size - size % batch_size
+        log.info("Size: %d -> %d", size, rounded_size)
+        size = rounded_size
         fin.seek(0)
         dataset = [numpy.zeros((size, sequence_length), dtype=numpy.uint8) for _ in range(2)]
         labels = numpy.zeros((size, 2), dtype=numpy.float32)
         for i, row in enumerate(csv.reader(fin)):
             if i % 1000 == 0:
                 sys.stderr.write("%d\r" % i)
+            if i >= size:
+                break
             labels[i][int(row[0])] = 1
             bintext = row[1].strip().encode("utf-8")[-sequence_length:]
             dataset[0][i][-len(bintext):] = list(bintext)
@@ -171,7 +175,10 @@ def export_model(model, path: str):
 def main():
     args = setup()
     try:
-        dataset = read_dataset(args.input, args.length)
+        dataset = read_dataset(
+            args.input,
+            args.length,
+            args.batch_size if args.validation == 0 else int(args.batch_size / args.validation))
         config_keras()
         model_char = create_char_rnn_model(args)
         train_char_rnn_model(model_char, dataset, args)
