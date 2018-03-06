@@ -14,7 +14,7 @@ import numpy
 def setup():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-i", "--input", help="Path to the train dataset in CSV format.")
-    parser.add_argument("-l", "--layers", default="512,256",
+    parser.add_argument("-l", "--layers", default="512,512",
                         help="Layers configuration: number of neurons on each layer separated by "
                              "comma.")
     parser.add_argument("-m", "--length", type=int, default=180, help="RNN sequence length.")
