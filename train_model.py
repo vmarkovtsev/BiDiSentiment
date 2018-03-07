@@ -30,11 +30,12 @@ def setup():
                         help="Optimizer to apply.")
     parser.add_argument("--dropout", type=float, default=0, help="Dropout ratio.")
     parser.add_argument("--lr", default=0.001, type=float, help="Learning rate.")
-    parser.add_argument("--decay", default=0.00002, type=float, help="Learning rate decay.")
+    parser.add_argument("--decay", default=0.00005, type=float, help="Learning rate decay.")
     parser.add_argument("--seed", type=int, default=7, help="Random seed.")
     parser.add_argument("--devices", default="0,1", help="Devices to use. Empty means CPU.")
     parser.add_argument("--tensorboard", default="tb_logs",
                         help="TensorBoard output logs directory.")
+    parser.add_argument("--snapshot", help="Keras model snapshot to load.")
     logging.basicConfig(level=logging.INFO)
     args = parser.parse_args()
     numpy.random.seed(args.seed)
@@ -175,14 +176,19 @@ def export_model(model, path: str):
 def main():
     args = setup()
     try:
-        dataset = read_dataset(
-            args.input,
-            args.length,
-            args.batch_size if args.validation == 0 else int(args.batch_size / args.validation))
-        config_keras()
-        model_char = create_char_rnn_model(args)
-        train_char_rnn_model(model_char, dataset, args)
-        del dataset
+        if not args.snapshot:
+            if args.validation == 0:
+                round_size = args.batch_size
+            else:
+                round_size = int(args.batch_size / args.validation)
+            dataset = read_dataset(args.input, args.length, round_size)
+            config_keras()
+            model_char = create_char_rnn_model(args)
+            train_char_rnn_model(model_char, dataset, args)
+            del dataset
+        else:
+            from keras.models import load_model
+            model_char = load_model(args.snapshot)
         export_model(model_char, args.output)
         del model_char
     finally:
