@@ -1,4 +1,4 @@
-BiDiSentiment
+BiDiSentiment [![GoDoc](https://godoc.org/gopkg.in/vmarkovtsev/BiDiSentiment.v1?status.svg)](http://godoc.org/gopkg.in/vmarkovtsev/BiDiSentiment.v1) [![Build Status](https://travis-ci.org/vmarkovtsev/BiDiSentiment.svg?branch=master)](https://travis-ci.org/vmarkovtsev/BiDiSentiment)
 =============
 
 Text sentiment analyser for Go and Python.
