@@ -68,10 +68,13 @@ func loadSentenceSplitter() *sentences.DefaultSentenceTokenizer {
 	return sentences.NewSentenceTokenizer(training)
 }
 
+// Evaluate analyzes the sentiment of the specified batch of texts.
 func Evaluate(texts []string, session *tf.Session) ([]float32, error) {
 	return EvaluateWithProgress(texts, session, func(int, int){})
 }
 
+// EvaluateWithProgress analyzes the sentiment of the specified batch of texts.
+// onBatchProcessed callback is invoked after processing every minibatch.
 func EvaluateWithProgress(texts []string, session *tf.Session,
 		onBatchProcessed func(int, int)) ([]float32, error) {
 	// make each subtext span over less than instance.sequenceLength bytes
@@ -145,14 +148,18 @@ func EvaluateWithProgress(texts []string, session *tf.Session,
 	return result, nil
 }
 
+// OpenSession creates the Tensorflow session which is used by Evaluate()/EvaluateWithProgress().
 func OpenSession() (*tf.Session, error) {
 	return tf.NewSession(instance.graph, &tf.SessionOptions{})
 }
 
+// GetBatchSize returns the model's minibatch size.
 func GetBatchSize() int {
 	return instance.batchSize
 }
 
+// GetSequenceLength returns the maximum length of the text, Longer texts are automatically split
+// by sentence.
 func GetSequenceLength() int {
 	return instance.sequenceLength
 }
