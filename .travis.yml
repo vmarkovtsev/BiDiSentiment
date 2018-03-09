@@ -1,0 +1,28 @@
+language: go
+
+sudo: required
+go_import_path: gopkg.in/vmarkovtsev/BiDiSentiment.v1
+go:
+  - 1.8
+  - 1.9
+
+before_install:
+  - curl -L "https://storage.googleapis.com/tensorflow/libtensorflow/libtensorflow-cpu-$(go env GOOS)-x86_64-1.6.0.tar.gz" | sudo tar -C /usr/local -xz
+  - sudo ldconfig
+  - go get -v github.com/golang/lint/golint
+
+script:
+  - set -e
+  - go vet ./...
+  - golint -set_exit_status ./...
+  - set +e
+
+deploy:
+  provider: releases
+  api_key:
+    secure: $GITHUB_TOKEN
+  file: "$GOPATH/bin/sentiment"
+  skip_cleanup: true
+  on:
+    tags: true
+    go: 1.9

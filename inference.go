@@ -69,6 +69,11 @@ func loadSentenceSplitter() *sentences.DefaultSentenceTokenizer {
 }
 
 func Evaluate(texts []string, session *tf.Session) ([]float32, error) {
+	return EvaluateWithProgress(texts, session, func(int, int){})
+}
+
+func EvaluateWithProgress(texts []string, session *tf.Session,
+		onBatchProcessed func(int, int)) ([]float32, error) {
 	// make each subtext span over less than instance.sequenceLength bytes
 	splittedTexts := splitTexts(texts)
 	batch1 := make([][]uint8, instance.batchSize)
@@ -78,6 +83,10 @@ func Evaluate(texts []string, session *tf.Session) ([]float32, error) {
 		batch2[i] = make([]uint8, instance.sequenceLength)
 	}
 	pos := 0
+	size := 0
+	for _, group := range splittedTexts {
+		size += len(group)
+	}
 	probs := make([]float32, 0, len(texts) + instance.batchSize)
 	evaluate := func() error {
 		input1, err := tf.NewTensor(batch1)
@@ -94,6 +103,7 @@ func Evaluate(texts []string, session *tf.Session) ([]float32, error) {
 		if err != nil {
 			return err
 		}
+		onBatchProcessed(pos, size)
 		rawProbs := result[0].Value().([][]float32)
 		for _, vec := range rawProbs {
 			probs = append(probs, vec[0] / (vec[0] + vec[1]))
