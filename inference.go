@@ -86,6 +86,7 @@ func EvaluateWithProgress(texts []string, session *tf.Session,
 		batch2[i] = make([]uint8, instance.sequenceLength)
 	}
 	pos := 0
+	totalPos := 0
 	size := 0
 	for _, group := range splittedTexts {
 		size += len(group)
@@ -106,7 +107,7 @@ func EvaluateWithProgress(texts []string, session *tf.Session,
 		if err != nil {
 			return err
 		}
-		onBatchProcessed(pos, size)
+		onBatchProcessed(totalPos, size)
 		rawProbs := result[0].Value().([][]float32)
 		for _, vec := range rawProbs {
 			probs = append(probs, vec[0] / (vec[0] + vec[1]))
@@ -120,6 +121,7 @@ func EvaluateWithProgress(texts []string, session *tf.Session,
 				batch2[pos][len(text)-i-1] = c
 			}
 			pos++
+			totalPos++
 			if pos == instance.batchSize {
 				err := evaluate()
 				if err != nil {
