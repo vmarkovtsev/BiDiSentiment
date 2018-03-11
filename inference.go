@@ -85,13 +85,12 @@ func EvaluateWithProgress(texts []string, session *tf.Session,
 		batch1[i] = make([]uint8, instance.sequenceLength)
 		batch2[i] = make([]uint8, instance.sequenceLength)
 	}
-	pos := 0
 	totalPos := 0
 	size := 0
 	for _, group := range splittedTexts {
 		size += len(group)
 	}
-	probs := make([]float32, 0, len(texts) + instance.batchSize)
+	probs := make([]float32, 0, size + instance.batchSize)
 	evaluate := func() error {
 		input1, err := tf.NewTensor(batch1)
 		if err != nil {
@@ -114,11 +113,16 @@ func EvaluateWithProgress(texts []string, session *tf.Session,
 		}
 		return nil
 	}
+	pos := 0
 	for _, group := range splittedTexts {
 		for _, text := range group {
 			for i, c := range []uint8(text) {
 				batch1[pos][instance.sequenceLength-len(text)+i] = c
-				batch2[pos][len(text)-i-1] = c
+				batch2[pos][instance.sequenceLength-i-1] = c
+			}
+			for i := 0; i < instance.sequenceLength - len(text); i++ {
+				batch1[pos][i] = 0
+				batch2[pos][i] = 0
 			}
 			pos++
 			totalPos++
