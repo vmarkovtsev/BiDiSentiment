@@ -2,27 +2,27 @@ package sentiment
 
 import (
 	"log"
-	"regexp"
 	"os"
+	"regexp"
 
-	"gopkg.in/neurosnap/sentences.v1"
 	tf "github.com/tensorflow/tensorflow/tensorflow/go"
+	"gopkg.in/neurosnap/sentences.v1"
 	"gopkg.in/vmarkovtsev/BiDiSentiment.v1/assets"
 )
 
 type model struct {
-	graph *tf.Graph
-	input1 tf.Output
-	input2 tf.Output
-	output tf.Output
-	batchSize int
+	graph          *tf.Graph
+	input1         tf.Output
+	input2         tf.Output
+	output         tf.Output
+	batchSize      int
 	sequenceLength int
 }
 
 var (
-	instance = loadModel()
+	instance         = loadModel()
 	sentenceSplitter = loadSentenceSplitter()
-	whitespace = regexp.MustCompile("\\s+")
+	whitespace       = regexp.MustCompile("\\s+")
 )
 
 func loadModel() *model {
@@ -45,12 +45,12 @@ func loadModel() *model {
 	}
 	batchSize := int(inputShape[0])
 	sequenceLength := int(inputShape[1])
-	return &model {
-		graph: graph,
-		input1: input1,
-		input2: input2,
-		output: output,
-		batchSize: batchSize,
+	return &model{
+		graph:          graph,
+		input1:         input1,
+		input2:         input2,
+		output:         output,
+		batchSize:      batchSize,
 		sequenceLength: sequenceLength,
 	}
 }
@@ -70,13 +70,13 @@ func loadSentenceSplitter() *sentences.DefaultSentenceTokenizer {
 
 // Evaluate analyzes the sentiment of the specified batch of texts.
 func Evaluate(texts []string, session *tf.Session) ([]float32, error) {
-	return EvaluateWithProgress(texts, session, func(int, int){})
+	return EvaluateWithProgress(texts, session, func(int, int) {})
 }
 
 // EvaluateWithProgress analyzes the sentiment of the specified batch of texts.
 // onBatchProcessed callback is invoked after processing every minibatch.
 func EvaluateWithProgress(texts []string, session *tf.Session,
-		onBatchProcessed func(int, int)) ([]float32, error) {
+	onBatchProcessed func(int, int)) ([]float32, error) {
 	// make each subtext span over less than instance.sequenceLength bytes
 	splittedTexts := splitTexts(texts)
 	batch1 := make([][]uint8, instance.batchSize)
@@ -90,7 +90,7 @@ func EvaluateWithProgress(texts []string, session *tf.Session,
 	for _, group := range splittedTexts {
 		size += len(group)
 	}
-	probs := make([]float32, 0, size + instance.batchSize)
+	probs := make([]float32, 0, size+instance.batchSize)
 	evaluate := func() error {
 		input1, err := tf.NewTensor(batch1)
 		if err != nil {
@@ -109,7 +109,7 @@ func EvaluateWithProgress(texts []string, session *tf.Session,
 		onBatchProcessed(totalPos, size)
 		rawProbs := result[0].Value().([][]float32)
 		for _, vec := range rawProbs {
-			probs = append(probs, vec[0] / (vec[0] + vec[1]))
+			probs = append(probs, vec[0]/(vec[0]+vec[1]))
 		}
 		return nil
 	}
@@ -120,7 +120,7 @@ func EvaluateWithProgress(texts []string, session *tf.Session,
 				batch1[pos][instance.sequenceLength-len(text)+i] = c
 				batch2[pos][instance.sequenceLength-i-1] = c
 			}
-			for i := 0; i < instance.sequenceLength - len(text); i++ {
+			for i := 0; i < instance.sequenceLength-len(text); i++ {
 				batch1[pos][i] = 0
 				batch2[pos][i] = 0
 			}
@@ -186,7 +186,7 @@ func splitTexts(texts []string) [][]string {
 					splitPoints := whitespace.FindAllStringIndex(sentence.Text, -1)
 					startPos := 0
 					for j, splitPoint := range splitPoints {
-						if splitPoint[0] - startPos > instance.sequenceLength {
+						if splitPoint[0]-startPos > instance.sequenceLength {
 							if i == 0 || splitPoints[j-1][1] == startPos {
 								if startPos == 0 {
 									// the best we can do

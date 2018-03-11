@@ -35,7 +35,7 @@ func main() {
 
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
-    batch = append(batch, line)
+		batch = append(batch, line)
 		if len(batch) >= batchSize {
 			evaluate()
 		}
