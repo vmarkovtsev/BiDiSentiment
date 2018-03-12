@@ -14,13 +14,14 @@ import numpy
 def setup():
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("-i", "--input", help="Path to the train dataset in CSV format.")
-    parser.add_argument("-l", "--layers", default="512,512",
+    parser.add_argument("-l", "--layers", default="512,256",
                         help="Layers configuration: number of neurons on each layer separated by "
                              "comma.")
     parser.add_argument("-m", "--length", type=int, default=180, help="RNN sequence length.")
     parser.add_argument("-b", "--batch-size", type=int, default=128, help="Batch size.")
     parser.add_argument("-e", "--epochs", type=int, default=10, help="Number of epochs.")
-    parser.add_argument("-t", "--type", default="LSTM", choices=("GRU", "LSTM"),
+    parser.add_argument("-t", "--type", default="LSTM",
+                        choices=("GRU", "LSTM", "CuDNNLSTM", "CuDNNGRU"),
                         help="Recurrent layer type to use.")
     parser.add_argument("-v", "--validation", type=float, default=0.2,
                         help="Fraction of the dataset to use for validation.")
@@ -103,8 +104,13 @@ def create_char_rnn_model(args: argparse.Namespace):
         layer_sizes = [int(n) for n in args.layers.split(",")]
         for i, nn in enumerate(layer_sizes):
             with tf.device(device):
-                layer = getattr(layers, args.type)(
-                    nn, return_sequences=(i < len(layer_sizes) - 1), implementation=2)(layer)
+                layer_type = getattr(layers, args.type)
+                ret_seqs = (i < len(layer_sizes) - 1)
+                try:
+                    layer = layer_type(nn, return_sequences=ret_seqs, implementation=2)(layer)
+                except TypeError:
+                    # implementation kwarg is not present in CuDNN layers
+                    layer = layer_type(nn, return_sequences=ret_seqs)(layer)
                 log.info("Added %s", layer)
             if args.dropout > 0:
                 layer = layers.Dropout(args.dropout)(layer)
