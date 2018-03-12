@@ -48,7 +48,7 @@ Science
 We scan through the text by byte in both directions, and the length is constrained to 180 bytes.
 The training is written in Python and is based on Keras and Tensorflow. The achieved accuracy
 on 20% validation is **87%**. The train dataset was
-[1.5 million twits](http://thinknook.com/twitter-sentiment-analysis-training-corpus-dataset-2012-09-22/).
+[1.5 million tweets](http://thinknook.com/twitter-sentiment-analysis-training-corpus-dataset-2012-09-22/).
 The default parameters were used. The model easily overfits, so only the first 5 epochs were used.
 
 ![validation](doc/valid.png)
