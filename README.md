@@ -5,6 +5,8 @@ Text sentiment analyser for Go and Python.
 
 Runs on top of Tensorflow. The architecture is a bidirectional two-level character LSTM.
 
+![Happy and sad gophers](doc/logo_small.png)
+
 Installation of the inference module
 ------------------------------------
 
