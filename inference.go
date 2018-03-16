@@ -116,11 +116,15 @@ func EvaluateWithProgress(texts []string, session *tf.Session,
 	pos := 0
 	for _, group := range splittedTexts {
 		for _, text := range group {
-			for i, c := range []uint8(text) {
-				batch1[pos][instance.sequenceLength-len(text)+i] = c
+			bytes := []uint8(text)
+			if len(bytes) > instance.sequenceLength {
+				bytes = bytes[:instance.sequenceLength]
+			}
+			for i, c := range bytes {
+				batch1[pos][instance.sequenceLength-len(bytes)+i] = c
 				batch2[pos][instance.sequenceLength-i-1] = c
 			}
-			for i := 0; i < instance.sequenceLength-len(text); i++ {
+			for i := 0; i < instance.sequenceLength-len(bytes); i++ {
 				batch1[pos][i] = 0
 				batch2[pos][i] = 0
 			}
